@@ -73,7 +73,7 @@ jobs:
         env:
           PLAN: "terraform¥n${{ steps.plan.outputs.stdout }}"
         with:
-          # github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.B_TOKEN }}
           script: |
             const output = `## \`${{ matrix.dir }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
