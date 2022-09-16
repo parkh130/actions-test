@@ -21,6 +21,12 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
 
+      # push時にコメントする時にcontext.issue.numberが取れない問題を解消する
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findpr
+        with:
+          state: all
+
       # mainとの変更差分を検知する
       - name: check diff
         id: diff
@@ -72,8 +78,9 @@ jobs:
         uses: actions/github-script@v6.1.0
         env:
           PLAN: "terraform¥n${{ steps.plan.outputs.stdout }}"
+          GITHUB_ISSUE_NUMBER: ${{ steps.findpr.outputs.pr }}
         with:
-          github-token: ${{ secrets.B_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `## \`${{ matrix.dir }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
@@ -81,10 +88,11 @@ jobs:
             <details><summary>Show Plan</summary>
 
             \`\`\`${process.env.PLAN}\`\`\`
+
             </details>`;
 
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: process.env.GITHUB_ISSUE_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: output
