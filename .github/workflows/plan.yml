@@ -40,7 +40,7 @@ jobs:
       # mainとの変更差分がない場合はskip
       - name: setup terraform
         id: setup
-        if: steps.diff.outputs.diff
+        # if: steps.diff.outputs.diff
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.2
@@ -49,14 +49,14 @@ jobs:
       # mainとの変更差分がない場合はskip
       - name: terraform init
         id: init
-        if: steps.diff.outputs.diff
+        # if: steps.diff.outputs.diff
         run: terraform init
         working-directory: ${{ matrix.dir }}
 
       # terraform plan
       # mainとの変更差分がない場合はskip
       - name: terraform plan
-        if: steps.diff.outputs.diff
+        # if: steps.diff.outputs.diff
         id: plan
         run: |
           terraform plan \
@@ -68,12 +68,12 @@ jobs:
       # comment
       # mainとの変更差分がない場合はskip
       - name: comment
-        if: steps.diff.outputs.diff
+        # if: steps.diff.outputs.diff
         uses: actions/github-script@v6.1.0
         env:
           PLAN: "terraform¥n${{ steps.plan.outputs.stdout }}"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `## \`${{ matrix.dir }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
