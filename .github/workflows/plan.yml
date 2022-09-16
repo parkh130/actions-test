@@ -29,20 +29,12 @@ jobs:
           PATTERNS: |
             ${{ matrix.dir }}/*.tf
 
-      # # credentialsの設定 staging
-      # - name: configure AWS credentials for staging
-      #   run: |
-      #     aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID_STG }} --profile cpi-staging
-      #     aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }} --profile cpi-staging
-      #     aws configure set aws-region ${{ secrets.AWS_REGION }}  --profile cpi-staging
-
-      # # credentialsの設定 production
-      # # tfstateファイルが設置されるS3はproductionに存在する
-      # - name: configure AWS credentials for production
-      #   run: |
-      #     aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID_PRD }} --profile cpi-production
-      #     aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY_PRD }} --profile cpi-production
-      #     aws configure set aws-region ${{ secrets.AWS_REGION }}  --profile cpi-production
+      # credentialsの設定 staging
+      - name: configure AWS credentials for staging
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID_STG }} --profile cpi-staging
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY_STG }} --profile cpi-staging
+          aws configure set aws-region ${{ secrets.AWS_REGION }}  --profile cpi-staging
 
       # terraformのsetup
       # mainとの変更差分がない場合はskip
@@ -61,41 +53,40 @@ jobs:
         run: terraform init
         working-directory: ${{ matrix.dir }}
 
-      # # terraform plan
-      # # mainとの変更差分がない場合はskip
-      # - name: terraform plan
-      #   if: steps.diff.outputs.diff
-      #   id: plan
-      #   run: |
-      #     terraform plan \
-      #     -var-file "../../../../terraform/common/cpi/tfvars/common.tfvars" \
-      #     -var-file "../../../../terraform/common/cpi/tfvars/stg.tfvars" \
-      #     -compact-warnings -parallelism 30 -no-color
-      #   working-directory: ${{ matrix.dir }}
-      #   continue-on-error: true
+      # terraform plan
+      # mainとの変更差分がない場合はskip
+      - name: terraform plan
+        if: steps.diff.outputs.diff
+        id: plan
+        run: |
+          terraform plan \
+          -var-file "./stg.tfvars" \
+          -compact-warnings -parallelism 30 -no-color
+        working-directory: ${{ matrix.dir }}
+        continue-on-error: true
 
-      # # comment
-      # # mainとの変更差分がない場合はskip
-      # - name: comment
-      #   if: steps.diff.outputs.diff
-      #   uses: actions/github-script@v6.1.0
-      #   env:
-      #     PLAN: "terraform¥n${{ steps.plan.outputs.stdout }}"
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     script: |
-      #       const output = `## \`${{ matrix.dir }}\`
-      #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+      # comment
+      # mainとの変更差分がない場合はskip
+      - name: comment
+        if: steps.diff.outputs.diff
+        uses: actions/github-script@v6.1.0
+        env:
+          PLAN: "terraform¥n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `## \`${{ matrix.dir }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-      #       <details><summary>Show Plan</summary>
+            <details><summary>Show Plan</summary>
 
-      #       \`\`\`${process.env.PLAN}\`\`\`
+            \`\`\`${process.env.PLAN}\`\`\`
 
-      #       </details>`;
+            </details>`;
 
-      #       github.rest.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: output
-      #       })
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
